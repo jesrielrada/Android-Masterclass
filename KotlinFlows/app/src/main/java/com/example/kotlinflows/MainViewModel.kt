@@ -1,12 +1,15 @@
 package com.example.kotlinflows
 
+import DispatcherProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class MainViewModel : ViewModel() {
+class MainViewModel(
+    private val dispatchers: DispatcherProvider
+) : ViewModel() {
 
     /**
      * Cold flow - would not emit values if no collectors
@@ -21,7 +24,7 @@ class MainViewModel : ViewModel() {
             currentValue--
             emit(currentValue)
         }
-    }
+    }.flowOn(dispatchers.main)
 
     /**
      * Hot flow - State Flow - is for state the you want to retain after screen rotation
@@ -36,8 +39,8 @@ class MainViewModel : ViewModel() {
     val sharedFlow = _sharedFlow.asSharedFlow()
 
 
-    fun squareNumber(number: Int){
-        viewModelScope.launch {
+    fun squareNumber(number: Int) {
+        viewModelScope.launch(dispatchers.main) {
             _sharedFlow.emit(number * number)
         }
     }
@@ -59,14 +62,14 @@ class MainViewModel : ViewModel() {
         //collectFlowTerminalOperatorFlatMapConcat()
         squareNumber(3)
 
-        viewModelScope.launch {
-            sharedFlow.collect{
+        viewModelScope.launch(dispatchers.main) {
+            sharedFlow.collect {
                 delay(2000L)
                 println("FIRST FLOW: The received number is $it")
             }
         }
-        viewModelScope.launch {
-            sharedFlow.collect{
+        viewModelScope.launch(dispatchers.main) {
+            sharedFlow.collect {
                 delay(3000L)
                 println("SECOND FLOW: The received number is $it")
             }
